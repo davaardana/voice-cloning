@@ -203,4 +203,7 @@ def analyze():
 
 
 if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=8000, debug=True)
+    host = os.getenv("APP_HOST", "0.0.0.0")
+    port = int(os.getenv("APP_PORT", "8000"))
+    debug = os.getenv("APP_DEBUG", "0") == "1"
+    app.run(host=host, port=port, debug=debug)
