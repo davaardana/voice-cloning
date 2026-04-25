@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Statistik MFCC</title>
+  <style>
+    :root {
+      --bg: #f7f4ef;
+      --card: #ffffff;
+      --ink: #1f2a37;
+      --sub: #5b6470;
+      --accent: #0a7f6f;
+      --accent-2: #d97706;
+      --line: #d9e0e8;
+      --good: #0f766e;
+      --warn: #b45309;
+      --bad: #b91c1c;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background:
+        radial-gradient(circle at 0% 0%, #efe8dc 0, transparent 40%),
+        radial-gradient(circle at 100% 100%, #dceee9 0, transparent 35%),
+        var(--bg);
+      color: var(--ink);
+    }
+
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #0a7f6f 0%, #0f766e 45%, #115e59 100%);
+      color: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 12px 30px rgba(17, 94, 89, 0.22);
+      margin-bottom: 18px;
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: 1.8rem;
+      line-height: 1.2;
+    }
+
+    .hero p {
+      margin: 0;
+      opacity: 0.95;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 8px 16px rgba(31, 42, 55, 0.05);
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: #fcfdff;
+    }
+
+    .metric .label {
+      font-size: 0.82rem;
+      color: var(--sub);
+      margin-bottom: 6px;
+    }
+
+    .metric .value {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    input[type="file"],
+    select,
+    button {
+      border: 1px solid #c7d2df;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.95rem;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    button {
+      cursor: pointer;
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    button:hover { filter: brightness(0.94); }
+
+    .status {
+      margin-top: 10px;
+      color: var(--sub);
+      font-size: 0.92rem;
+    }
+
+    .status.ok { color: var(--good); }
+    .status.warn { color: var(--warn); }
+    .status.bad { color: var(--bad); }
+
+    .chart {
+      width: 100%;
+      height: 340px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+    }
+
+    .chart-wrap {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: 1fr;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f4f7fb;
+      color: #364152;
+      font-weight: 600;
+    }
+
+    .scroll {
+      overflow: auto;
+      max-height: 360px;
+    }
+
+    .legend {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      font-size: 0.85rem;
+      color: var(--sub);
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      display: inline-block;
+      margin-right: 5px;
+    }
+
+    @media (max-width: 880px) {
+      .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hero h1 { font-size: 1.5rem; }
+    }
+
+    @media (max-width: 540px) {
+      .grid-4 { grid-template-columns: 1fr; }
+      .wrap { padding: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>Dashboard Statistik MFCC</h1>
+      <p>Tarik data langsung dari backend Python untuk melihat ringkasan statistik, tabel data, dan visualisasi perbandingan fitur MFCC.</p>
+    </section>
+
+    <section class="card">
+      <div class="controls">
+        <input id="apiBase" type="text" value="http://127.0.0.1:8000" />
+        <button id="loadBackend">Tarik Data Backend</button>
+        <select id="numericColumn"></select>
+        <button id="drawGeneric">Lihat Grafik Kolom</button>
+        <button id="drawMfcc">Grafik MFCC Asli vs Clone</button>
+      </div>
+      <div id="status" class="status">Klik "Tarik Data Backend" untuk mulai analisis.</div>
+    </section>
+
+    <section class="card">
+      <div class="grid-4">
+        <div class="metric">
+          <div class="label">Jumlah Baris</div>
+          <div id="mRows" class="value">-</div>
+        </div>
+        <div class="metric">
+          <div class="label">Jumlah Kolom</div>
+          <div id="mCols" class="value">-</div>
+        </div>
+        <div class="metric">
+          <div class="label">Kolom Numerik</div>
+          <div id="mNums" class="value">-</div>
+        </div>
+        <div class="metric">
+          <div class="label">Nilai Kosong</div>
+          <div id="mMissing" class="value">-</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card chart-wrap">
+      <h3>Visualisasi</h3>
+      <div class="legend">
+        <span><span class="dot" style="background:#0a7f6f"></span>Data A</span>
+        <span><span class="dot" style="background:#d97706"></span>Data B</span>
+      </div>
+      <canvas id="chart" class="chart" width="1000" height="340"></canvas>
+    </section>
+
+    <section class="card">
+      <h3>Statistik Kolom Numerik</h3>
+      <div class="scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Kolom</th>
+              <th>n</th>
+              <th>Mean</th>
+              <th>Std</th>
+              <th>Min</th>
+              <th>Max</th>
+            </tr>
+          </thead>
+          <tbody id="statsTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Preview Data</h3>
+      <div class="scroll">
+        <table>
+          <thead id="previewHead"></thead>
+          <tbody id="previewBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const el = {
+      apiBase: document.getElementById("apiBase"),
+      loadBackend: document.getElementById("loadBackend"),
+      numericColumn: document.getElementById("numericColumn"),
+      drawGeneric: document.getElementById("drawGeneric"),
+      drawMfcc: document.getElementById("drawMfcc"),
+      status: document.getElementById("status"),
+      chart: document.getElementById("chart"),
+      mRows: document.getElementById("mRows"),
+      mCols: document.getElementById("mCols"),
+      mNums: document.getElementById("mNums"),
+      mMissing: document.getElementById("mMissing"),
+      statsTableBody: document.getElementById("statsTableBody"),
+      previewHead: document.getElementById("previewHead"),
+      previewBody: document.getElementById("previewBody")
+    };
+
+    let tableData = [];
+    let headers = [];
+    let numericColumns = [];
+
+    function setStatus(text, cls = "") {
+      el.status.textContent = text;
+      el.status.className = "status" + (cls ? " " + cls : "");
+    }
+
+    function toNumber(val) {
+      if (val === null || val === undefined) return NaN;
+      const normalized = String(val).replace(/\s+/g, "").replace(",", ".");
+      const num = Number(normalized);
+      return Number.isFinite(num) ? num : NaN;
+    }
+
+    function mean(arr) {
+      return arr.reduce((a, b) => a + b, 0) / arr.length;
+    }
+
+    function std(arr, mu) {
+      if (arr.length < 2) return 0;
+      const variance = arr.reduce((acc, x) => acc + Math.pow(x - mu, 2), 0) / (arr.length - 1);
+      return Math.sqrt(variance);
+    }
+
+    function detectNumericColumns(data, cols) {
+      return cols.filter(col => {
+        let count = 0;
+        for (const row of data) {
+          const n = toNumber(row[col]);
+          if (!Number.isNaN(n)) count++;
+        }
+        return count > 0;
+      });
+    }
+
+    function computeMissing(data, cols) {
+      let missing = 0;
+      for (const row of data) {
+        for (const col of cols) {
+          const v = row[col];
+          if (v === "" || v === null || v === undefined) missing++;
+        }
+      }
+      return missing;
+    }
+
+    function setMetrics() {
+      el.mRows.textContent = tableData.length;
+      el.mCols.textContent = headers.length;
+      el.mNums.textContent = numericColumns.length;
+      el.mMissing.textContent = computeMissing(tableData, headers);
+    }
+
+    function populateColumnSelect() {
+      el.numericColumn.innerHTML = "";
+      if (!numericColumns.length) {
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "Tidak ada kolom numerik";
+        el.numericColumn.appendChild(opt);
+        return;
+      }
+
+      for (const col of numericColumns) {
+        const opt = document.createElement("option");
+        opt.value = col;
+        opt.textContent = col;
+        el.numericColumn.appendChild(opt);
+      }
+    }
+
+    function renderStatsTable() {
+      el.statsTableBody.innerHTML = "";
+      for (const col of numericColumns) {
+        const vals = tableData.map(r => toNumber(r[col])).filter(v => !Number.isNaN(v));
+        if (!vals.length) continue;
+        const mu = mean(vals);
+        const sd = std(vals, mu);
+        const mn = Math.min(...vals);
+        const mx = Math.max(...vals);
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = [
+          `<td>${col}</td>`,
+          `<td>${vals.length}</td>`,
+          `<td>${mu.toFixed(4)}</td>`,
+          `<td>${sd.toFixed(4)}</td>`,
+          `<td>${mn.toFixed(4)}</td>`,
+          `<td>${mx.toFixed(4)}</td>`
+        ].join("");
+        el.statsTableBody.appendChild(tr);
+      }
+    }
+
+    function renderPreview(maxRows = 20) {
+      el.previewHead.innerHTML = "";
+      el.previewBody.innerHTML = "";
+
+      const headRow = document.createElement("tr");
+      for (const h of headers) {
+        const th = document.createElement("th");
+        th.textContent = h;
+        headRow.appendChild(th);
+      }
+      el.previewHead.appendChild(headRow);
+
+      for (const row of tableData.slice(0, maxRows)) {
+        const tr = document.createElement("tr");
+        for (const h of headers) {
+          const td = document.createElement("td");
+          td.textContent = row[h] ?? "";
+          tr.appendChild(td);
+        }
+        el.previewBody.appendChild(tr);
+      }
+    }
+
+    function clearCanvas() {
+      const ctx = el.chart.getContext("2d");
+      ctx.clearRect(0, 0, el.chart.width, el.chart.height);
+      ctx.fillStyle = "#5b6470";
+      ctx.font = "14px Segoe UI";
+      ctx.fillText("Belum ada grafik. Pilih aksi di atas.", 20, 30);
+    }
+
+    function drawAxes(ctx, area) {
+      ctx.strokeStyle = "#9aa6b2";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(area.left, area.top);
+      ctx.lineTo(area.left, area.bottom);
+      ctx.lineTo(area.right, area.bottom);
+      ctx.stroke();
+    }
+
+    function drawBarChart(labels, valuesA, valuesB = null, title = "") {
+      const ctx = el.chart.getContext("2d");
+      ctx.clearRect(0, 0, el.chart.width, el.chart.height);
+
+      const area = { left: 60, top: 40, right: 980, bottom: 300 };
+      drawAxes(ctx, area);
+
+      const allVals = valuesB ? valuesA.concat(valuesB) : valuesA.slice();
+      const maxVal = Math.max(...allVals, 0.000001);
+      const minVal = Math.min(...allVals, 0);
+      const range = maxVal - minVal || 1;
+
+      const n = labels.length;
+      const groupWidth = (area.right - area.left) / Math.max(n, 1);
+      const barWidth = valuesB ? groupWidth * 0.32 : groupWidth * 0.6;
+
+      const yOf = v => area.bottom - ((v - minVal) / range) * (area.bottom - area.top);
+
+      for (let i = 0; i < n; i++) {
+        const gx = area.left + i * groupWidth + groupWidth * 0.2;
+
+        const yA = yOf(valuesA[i]);
+        ctx.fillStyle = "#0a7f6f";
+        ctx.fillRect(gx, Math.min(yA, yOf(0)), barWidth, Math.abs(yA - yOf(0)));
+
+        if (valuesB) {
+          const yB = yOf(valuesB[i]);
+          ctx.fillStyle = "#d97706";
+          ctx.fillRect(gx + barWidth + groupWidth * 0.08, Math.min(yB, yOf(0)), barWidth, Math.abs(yB - yOf(0)));
+        }
+
+        if (i % Math.ceil(n / 10) === 0 || n <= 14) {
+          ctx.save();
+          ctx.translate(area.left + i * groupWidth + groupWidth * 0.5, area.bottom + 14);
+          ctx.rotate(-0.55);
+          ctx.fillStyle = "#364152";
+          ctx.font = "11px Segoe UI";
+          ctx.fillText(String(labels[i]), 0, 0);
+          ctx.restore();
+        }
+      }
+
+      ctx.fillStyle = "#1f2a37";
+      ctx.font = "bold 15px Segoe UI";
+      ctx.fillText(title, 60, 24);
+
+      ctx.fillStyle = "#5b6470";
+      ctx.font = "11px Segoe UI";
+      ctx.fillText(`Min: ${minVal.toFixed(3)} | Max: ${maxVal.toFixed(3)}`, 60, 318);
+    }
+
+    function drawGenericColumn() {
+      const col = el.numericColumn.value;
+      if (!col) {
+        setStatus("Tidak ada kolom numerik untuk divisualisasikan.", "warn");
+        return;
+      }
+
+      const labels = tableData.map((r, i) => r.Koefisien_MFCC || r.file || r.label || String(i + 1));
+      const values = tableData.map(r => toNumber(r[col])).filter(v => !Number.isNaN(v));
+
+      if (!values.length) {
+        setStatus("Kolom terpilih tidak punya nilai numerik valid.", "warn");
+        return;
+      }
+
+      const n = Math.min(labels.length, values.length);
+      drawBarChart(labels.slice(0, n), values.slice(0, n), null, `Grafik Kolom: ${col}`);
+      setStatus(`Grafik kolom ${col} berhasil dibuat.`, "ok");
+    }
+
+    function drawMfccComparison() {
+      const meanCols = headers
+        .filter(h => /^mean_\d+$/i.test(h))
+        .sort((x, y) => Number(x.split("_")[1]) - Number(y.split("_")[1]));
+
+      if (!meanCols.length) {
+        setStatus("Kolom mean_i tidak ditemukan dari backend.", "warn");
+        return;
+      }
+
+      const rowAsli = tableData.find(r => String(r.label).toLowerCase() === "asli");
+      const rowClone = tableData.find(r => String(r.label).toLowerCase() === "cloning");
+
+      if (rowAsli && rowClone) {
+        const labels = meanCols.map(c => c.replace("mean_", "MFCC_"));
+        const a = meanCols.map(c => toNumber(rowAsli[c]));
+        const b = meanCols.map(c => toNumber(rowClone[c]));
+        drawBarChart(labels, a, b, "Perbandingan Mean MFCC: Asli vs Clone");
+        setStatus("Grafik perbandingan MFCC asli vs clone berhasil dibuat.", "ok");
+        return;
+      }
+
+      const labels = meanCols;
+      const firstRow = tableData[0] || {};
+      const secondRow = tableData[1] || null;
+      const a = meanCols.map(c => toNumber(firstRow[c]));
+      const b = secondRow ? meanCols.map(c => toNumber(secondRow[c])) : null;
+      drawBarChart(labels, a, b, "Perbandingan mean_i (2 baris pertama)");
+      setStatus("Grafik mean_i dibuat dari 2 data pertama (label tidak lengkap).", "warn");
+    }
+
+    function ingestBackendPayload(payload) {
+      if (!payload || !Array.isArray(payload.rows) || !Array.isArray(payload.headers)) {
+        setStatus("Payload backend tidak valid.", "bad");
+        return;
+      }
+
+      headers = payload.headers;
+      tableData = payload.rows;
+      numericColumns = detectNumericColumns(tableData, headers);
+
+      setMetrics();
+      populateColumnSelect();
+      renderStatsTable();
+      renderPreview();
+      clearCanvas();
+      setStatus("Data backend berhasil dimuat. Pilih jenis grafik.", "ok");
+    }
+
+    async function loadFromBackend() {
+      const base = String(el.apiBase.value || "").trim().replace(/\/$/, "");
+      if (!base) {
+        setStatus("Alamat backend wajib diisi.", "bad");
+        return;
+      }
+
+      try {
+        setStatus("Mengambil data dari backend...", "");
+        const resp = await fetch(`${base}/api/analyze`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({})
+        });
+
+        if (!resp.ok) {
+          const text = await resp.text();
+          throw new Error(text || `HTTP ${resp.status}`);
+        }
+
+        const payload = await resp.json();
+        ingestBackendPayload(payload);
+      } catch (err) {
+        setStatus(`Gagal memuat backend: ${err.message}`, "bad");
+      }
+    }
+
+    el.loadBackend.addEventListener("click", loadFromBackend);
+
+    el.drawGeneric.addEventListener("click", drawGenericColumn);
+    el.drawMfcc.addEventListener("click", drawMfccComparison);
+
+    clearCanvas();
+  </script>
+</body>
+</html>
