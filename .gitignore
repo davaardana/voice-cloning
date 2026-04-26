@@ -16,12 +16,6 @@ docs/
 !README.md
 *.docx
 
-# Output & Cache
-.cache/
-.pytest_cache/
-*.log
-*.pot
-
 # OS
 Thumbs.db
 .DS_Store
