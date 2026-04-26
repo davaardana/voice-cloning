@@ -1,0 +1,7 @@
+pair,file_asli,file_clone,sr_asli,sr_clone,durasi_asli_sec,durasi_clone_sec,mean_diff_avg,std_diff_avg
+asli1__clone1,asli1.wav,clone1.wav,48000,32000,10.354,10.946,9.6233,4.748022
+asli2__clone2,asli2.wav,clone2.wav,48000,32000,11.313,10.319,9.513746,3.036259
+asli3__clone3,asli3.wav,clone3.wav,48000,32000,10.914,10.308,8.592322,4.332334
+asli4__clone4,asli4.wav,clone4.wav,48000,32000,11.678,10.447,10.269106,2.579077
+asli5__clone5,asli5.wav,clone5.wav,48000,32000,11.798,10.679,10.219731,3.232973
+asli_cowo__clone_cowo,asli_cowo.wav,clone_cowo.wav,48000,32000,10.594,10.076,7.496172,2.166917
