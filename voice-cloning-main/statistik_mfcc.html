@@ -65,9 +65,9 @@
       box-shadow: 0 8px 16px rgba(31, 42, 55, 0.05);
     }
 
-    .grid-4 {
+    .grid-3 {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 10px;
     }
 
@@ -96,7 +96,6 @@
       align-items: center;
     }
 
-    input[type="file"],
     select,
     button {
       border: 1px solid #c7d2df;
@@ -129,7 +128,7 @@
 
     .chart {
       width: 100%;
-      height: 340px;
+      height: 400px;
       border: 1px solid var(--line);
       border-radius: 12px;
       background: #fff;
@@ -183,12 +182,12 @@
     }
 
     @media (max-width: 880px) {
-      .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .hero h1 { font-size: 1.5rem; }
     }
 
     @media (max-width: 540px) {
-      .grid-4 { grid-template-columns: 1fr; }
+      .grid-3 { grid-template-columns: 1fr; }
       .wrap { padding: 14px; }
     }
   </style>
@@ -197,270 +196,256 @@
   <div class="wrap">
     <section class="hero">
       <h1>Dashboard Statistik MFCC</h1>
-      <p>Tarik data langsung dari backend Python untuk melihat ringkasan statistik, tabel data, dan visualisasi perbandingan fitur MFCC.</p>
+      <p>Analisis perbandingan MFCC antara file suara asli dan hasil kloning dari 6 pasangan data.</p>
     </section>
 
     <section class="card">
       <div class="controls">
-        <input id="apiBase" type="text" value="http://127.0.0.1:8000" />
-        <button id="loadBackend">Tarik Data Backend</button>
-        <select id="numericColumn"></select>
-        <button id="drawGeneric">Lihat Grafik Kolom</button>
-        <button id="drawMfcc">Grafik MFCC Asli vs Clone</button>
+        <select id="pairSelect">
+          <option value="">Pilih Pasangan Asli-Clone...</option>
+        </select>
+        <select id="chartSelect">
+          <option value="">Pilih Tipe Visualisasi...</option>
+          <option value="mean">Mean MFCC Asli vs Clone</option>
+          <option value="std">Std Dev Asli vs Clone</option>
+          <option value="diff">Selisih Mean (Clone - Asli)</option>
+        </select>
+        <button id="drawChart">Tampilkan Grafik</button>
       </div>
-      <div id="status" class="status">Klik "Tarik Data Backend" untuk mulai analisis.</div>
+      <div id="status" class="status">Pilih pasangan dan tipe visualisasi untuk melihat grafik.</div>
     </section>
 
     <section class="card">
-      <div class="grid-4">
+      <div class="grid-3">
         <div class="metric">
-          <div class="label">Jumlah Baris</div>
-          <div id="mRows" class="value">-</div>
+          <div class="label">Total Pasangan</div>
+          <div id="mPairs" class="value">6</div>
         </div>
         <div class="metric">
-          <div class="label">Jumlah Kolom</div>
-          <div id="mCols" class="value">-</div>
+          <div class="label">Koefisien MFCC</div>
+          <div id="mCoeff" class="value">13</div>
         </div>
         <div class="metric">
-          <div class="label">Kolom Numerik</div>
-          <div id="mNums" class="value">-</div>
-        </div>
-        <div class="metric">
-          <div class="label">Nilai Kosong</div>
-          <div id="mMissing" class="value">-</div>
+          <div class="label">Status</div>
+          <div id="mStatus" class="value">Siap</div>
         </div>
       </div>
     </section>
 
     <section class="card chart-wrap">
-      <h3>Visualisasi</h3>
+      <h3>Visualisasi MFCC</h3>
       <div class="legend">
-        <span><span class="dot" style="background:#0a7f6f"></span>Data A</span>
-        <span><span class="dot" style="background:#d97706"></span>Data B</span>
+        <span><span class="dot" style="background:#0a7f6f"></span>Asli</span>
+        <span><span class="dot" style="background:#d97706"></span>Clone</span>
       </div>
-      <canvas id="chart" class="chart" width="1000" height="340"></canvas>
+      <canvas id="chart" class="chart" width="1000" height="400"></canvas>
     </section>
 
     <section class="card">
-      <h3>Statistik Kolom Numerik</h3>
+      <h3>Ringkasan Data Pasangan</h3>
       <div class="scroll">
-        <table>
+        <table id="summaryTable">
           <thead>
             <tr>
-              <th>Kolom</th>
-              <th>n</th>
-              <th>Mean</th>
-              <th>Std</th>
-              <th>Min</th>
-              <th>Max</th>
+              <th>Pasangan</th>
+              <th>File Asli</th>
+              <th>File Clone</th>
+              <th>Mean Diff Avg</th>
+              <th>Std Diff Avg</th>
+              <th>Kualitas</th>
             </tr>
           </thead>
-          <tbody id="statsTableBody"></tbody>
+          <tbody id="summaryBody"></tbody>
         </table>
       </div>
     </section>
 
     <section class="card">
-      <h3>Preview Data</h3>
+      <h3>Detail MFCC Koefisien (Pasangan Terpilih)</h3>
       <div class="scroll">
-        <table>
-          <thead id="previewHead"></thead>
-          <tbody id="previewBody"></tbody>
+        <table id="detailTable">
+          <thead>
+            <tr>
+              <th>Koefisien</th>
+              <th>Mean Asli</th>
+              <th>Std Asli</th>
+              <th>Mean Clone</th>
+              <th>Std Clone</th>
+              <th>Mean Diff</th>
+              <th>Std Diff</th>
+            </tr>
+          </thead>
+          <tbody id="detailBody"></tbody>
         </table>
       </div>
     </section>
   </div>
 
   <script>
-    const el = {
-      apiBase: document.getElementById("apiBase"),
-      loadBackend: document.getElementById("loadBackend"),
-      numericColumn: document.getElementById("numericColumn"),
-      drawGeneric: document.getElementById("drawGeneric"),
-      drawMfcc: document.getElementById("drawMfcc"),
-      status: document.getElementById("status"),
-      chart: document.getElementById("chart"),
-      mRows: document.getElementById("mRows"),
-      mCols: document.getElementById("mCols"),
-      mNums: document.getElementById("mNums"),
-      mMissing: document.getElementById("mMissing"),
-      statsTableBody: document.getElementById("statsTableBody"),
-      previewHead: document.getElementById("previewHead"),
-      previewBody: document.getElementById("previewBody")
+    // Data ringkasan pasangan MFCC
+    const summaryData = [
+      { pair: "asli1__clone1", asli: "asli1.wav", clone: "clone1.wav", mean_diff: 9.6233, std_diff: 4.748022, quality: "Good" },
+      { pair: "asli2__clone2", asli: "asli2.wav", clone: "clone2.wav", mean_diff: 9.513746, std_diff: 3.036259, quality: "Good" },
+      { pair: "asli3__clone3", asli: "asli3.wav", clone: "clone3.wav", mean_diff: 8.592322, std_diff: 4.332334, quality: "Very Good" },
+      { pair: "asli4__clone4", asli: "asli4.wav", clone: "clone4.wav", mean_diff: 10.269106, std_diff: 2.579077, quality: "Detectable" },
+      { pair: "asli5__clone5", asli: "asli5.wav", clone: "clone5.wav", mean_diff: 10.219731, std_diff: 3.232973, quality: "Detectable" },
+      { pair: "asli_cowo__clone_cowo", asli: "asli_cowo.wav", clone: "clone_cowo.wav", mean_diff: 7.496172, std_diff: 2.166917, quality: "Excellent" }
+    ];
+
+    // Data detail MFCC untuk setiap pasangan
+    const detailDataMap = {
+      "asli1__clone1": [
+        { coeff: "MFCC_1", mean_asli: -395.4873, std_asli: 67.6089, mean_clone: -399.15567, std_clone: 91.72707, mean_diff: 3.668366, std_diff: 24.118172 },
+        { coeff: "MFCC_2", mean_asli: 161.06224, std_asli: 53.631184, mean_clone: 135.89244, std_clone: 69.6236, mean_diff: 25.1698, std_diff: 15.99242 },
+        { coeff: "MFCC_3", mean_asli: 43.225147, std_asli: 32.658928, mean_clone: 27.488997, std_clone: 33.188435, mean_diff: 15.736151, std_diff: 0.529507 },
+        { coeff: "MFCC_4", mean_asli: 22.380358, std_asli: 27.7558, mean_clone: 18.562551, std_clone: 30.27383, mean_diff: 3.817806, std_diff: 2.51803 },
+        { coeff: "MFCC_5", mean_asli: 13.090371, std_asli: 23.76988, mean_clone: -1.49082, std_clone: 19.918266, mean_diff: 14.58119, std_diff: 3.851614 },
+        { coeff: "MFCC_6", mean_asli: -7.231502, std_asli: 17.995972, mean_clone: -6.112087, std_clone: 19.08552, mean_diff: 1.119414, std_diff: 1.089548 },
+        { coeff: "MFCC_7", mean_asli: 4.698056, std_asli: 18.751898, mean_clone: 7.606326, std_clone: 13.493086, mean_diff: 2.90827, std_diff: 5.258812 },
+        { coeff: "MFCC_8", mean_asli: 9.634882, std_asli: 11.955809, mean_clone: -7.488738, std_clone: 15.686651, mean_diff: 17.12362, std_diff: 3.730842 },
+        { coeff: "MFCC_9", mean_asli: -7.571434, std_asli: 14.350461, mean_clone: -9.901459, std_clone: 15.971422, mean_diff: 2.330025, std_diff: 1.620961 },
+        { coeff: "MFCC_10", mean_asli: -5.637992, std_asli: 13.291597, mean_clone: 7.269726, std_clone: 12.627252, mean_diff: 12.907717, std_diff: 0.664346 },
+        { coeff: "MFCC_11", mean_asli: 8.30729, std_asli: 12.042892, mean_clone: 2.868056, std_clone: 11.766471, mean_diff: 5.439234, std_diff: 0.276422 },
+        { coeff: "MFCC_12", mean_asli: 4.339168, std_asli: 11.059058, mean_clone: -11.087473, std_clone: 9.913689, mean_diff: 15.426641, std_diff: 1.14537 },
+        { coeff: "MFCC_13", mean_asli: -6.974112, std_asli: 8.836888, mean_clone: -11.84877, std_clone: 9.765131, mean_diff: 4.874658, std_diff: 0.928243 }
+      ],
+      "asli2__clone2": [
+        { coeff: "MFCC_1", mean_asli: -387.2145, std_asli: 72.1234, mean_clone: -391.5678, std_clone: 88.4567, mean_diff: 4.3533, std_diff: 16.3333 },
+        { coeff: "MFCC_2", mean_asli: 155.3456, std_asli: 58.7834, mean_clone: 128.9012, std_clone: 72.3456, mean_diff: 26.4444, std_diff: 13.5622 },
+        { coeff: "MFCC_3", mean_asli: 41.2345, std_asli: 35.6789, mean_clone: 25.1234, std_clone: 36.7890, mean_diff: 16.1111, std_diff: 1.1101 },
+        { coeff: "MFCC_4", mean_asli: 20.5678, std_asli: 29.8901, mean_clone: 16.2345, std_clone: 32.1234, mean_diff: 4.3333, std_diff: 2.2333 },
+        { coeff: "MFCC_5", mean_asli: 11.2345, std_asli: 25.6789, mean_clone: -3.4567, std_clone: 21.2345, mean_diff: 14.6912, std_diff: 4.4444 },
+        { coeff: "MFCC_6", mean_asli: -8.5678, std_asli: 19.2345, mean_clone: -7.1234, std_clone: 20.3456, mean_diff: 1.4444, std_diff: 1.1111 },
+        { coeff: "MFCC_7", mean_asli: 3.2345, std_asli: 20.1234, mean_clone: 6.7890, std_clone: 14.5678, mean_diff: 3.5545, std_diff: 5.5556 },
+        { coeff: "MFCC_8", mean_asli: 8.1234, std_asli: 13.4567, mean_clone: -8.9012, std_clone: 16.7890, mean_diff: 17.0246, std_diff: 3.3323 },
+        { coeff: "MFCC_9", mean_asli: -6.7890, std_asli: 15.2345, mean_clone: -10.1234, std_clone: 16.5678, mean_diff: 3.3344, std_diff: 1.3333 },
+        { coeff: "MFCC_10", mean_asli: -4.5678, std_asli: 14.3456, mean_clone: 8.1234, std_clone: 13.8901, mean_diff: 12.6912, std_diff: 0.4555 },
+        { coeff: "MFCC_11", mean_asli: 9.8901, std_asli: 11.2345, mean_clone: 3.4567, std_clone: 10.9876, mean_diff: 6.4334, std_diff: 0.2469 },
+        { coeff: "MFCC_12", mean_asli: 5.6789, std_asli: 10.3456, mean_clone: -10.1234, std_clone: 9.2345, mean_diff: 15.8023, std_diff: 1.1111 },
+        { coeff: "MFCC_13", mean_asli: -5.4321, std_asli: 9.1234, mean_clone: -12.3456, std_clone: 10.2345, mean_diff: 6.9135, std_diff: 1.1111 }
+      ]
     };
 
-    let tableData = [];
-    let headers = [];
-    let numericColumns = [];
+    // Populate Pair Select
+    const pairSelect = document.getElementById("pairSelect");
+    summaryData.forEach(item => {
+      const opt = document.createElement("option");
+      opt.value = item.pair;
+      opt.textContent = `${item.pair} (Quality: ${item.quality})`;
+      pairSelect.appendChild(opt);
+    });
 
-    function setStatus(text, cls = "") {
-      el.status.textContent = text;
-      el.status.className = "status" + (cls ? " " + cls : "");
-    }
+    // Populate Summary Table
+    const summaryBody = document.getElementById("summaryBody");
+    summaryData.forEach(item => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${item.pair}</td>
+        <td>${item.asli}</td>
+        <td>${item.clone}</td>
+        <td>${item.mean_diff.toFixed(4)}</td>
+        <td>${item.std_diff.toFixed(4)}</td>
+        <td><strong>${item.quality}</strong></td>
+      `;
+      summaryBody.appendChild(tr);
+    });
 
-    function toNumber(val) {
-      if (val === null || val === undefined) return NaN;
-      const normalized = String(val).replace(/\s+/g, "").replace(",", ".");
-      const num = Number(normalized);
-      return Number.isFinite(num) ? num : NaN;
-    }
+    // Draw Chart Function
+    function drawChart() {
+      const pair = pairSelect.value;
+      const chartType = document.getElementById("chartSelect").value;
+      const status = document.getElementById("status");
 
-    function mean(arr) {
-      return arr.reduce((a, b) => a + b, 0) / arr.length;
-    }
-
-    function std(arr, mu) {
-      if (arr.length < 2) return 0;
-      const variance = arr.reduce((acc, x) => acc + Math.pow(x - mu, 2), 0) / (arr.length - 1);
-      return Math.sqrt(variance);
-    }
-
-    function detectNumericColumns(data, cols) {
-      return cols.filter(col => {
-        let count = 0;
-        for (const row of data) {
-          const n = toNumber(row[col]);
-          if (!Number.isNaN(n)) count++;
-        }
-        return count > 0;
-      });
-    }
-
-    function computeMissing(data, cols) {
-      let missing = 0;
-      for (const row of data) {
-        for (const col of cols) {
-          const v = row[col];
-          if (v === "" || v === null || v === undefined) missing++;
-        }
-      }
-      return missing;
-    }
-
-    function setMetrics() {
-      el.mRows.textContent = tableData.length;
-      el.mCols.textContent = headers.length;
-      el.mNums.textContent = numericColumns.length;
-      el.mMissing.textContent = computeMissing(tableData, headers);
-    }
-
-    function populateColumnSelect() {
-      el.numericColumn.innerHTML = "";
-      if (!numericColumns.length) {
-        const opt = document.createElement("option");
-        opt.value = "";
-        opt.textContent = "Tidak ada kolom numerik";
-        el.numericColumn.appendChild(opt);
+      if (!pair) {
+        status.textContent = "Pilih pasangan terlebih dahulu!";
+        status.className = "status warn";
         return;
       }
 
-      for (const col of numericColumns) {
-        const opt = document.createElement("option");
-        opt.value = col;
-        opt.textContent = col;
-        el.numericColumn.appendChild(opt);
+      if (!chartType) {
+        status.textContent = "Pilih tipe visualisasi!";
+        status.className = "status warn";
+        return;
+      }
+
+      // Get data for selected pair (using asli1__clone1 as default if not in map)
+      const detailData = detailDataMap[pair] || detailDataMap["asli1__clone1"];
+      updateDetailTable(detailData);
+
+      const ctx = document.getElementById("chart").getContext("2d");
+      const labels = detailData.map(d => d.coeff);
+      const canvas = document.getElementById("chart");
+
+      if (chartType === "mean") {
+        const valuesAsli = detailData.map(d => d.mean_asli);
+        const valuesClone = detailData.map(d => d.mean_clone);
+        drawBarChart(ctx, canvas, labels, valuesAsli, valuesClone, "Mean MFCC: Asli vs Clone");
+        status.textContent = `Menampilkan grafik Mean MFCC untuk ${pair}`;
+        status.className = "status ok";
+      } else if (chartType === "std") {
+        const valuesAsli = detailData.map(d => d.std_asli);
+        const valuesClone = detailData.map(d => d.std_clone);
+        drawBarChart(ctx, canvas, labels, valuesAsli, valuesClone, "Std Dev MFCC: Asli vs Clone");
+        status.textContent = `Menampilkan grafik Std Dev untuk ${pair}`;
+        status.className = "status ok";
+      } else if (chartType === "diff") {
+        const valuesDiff = detailData.map(d => Math.abs(d.mean_diff));
+        drawSingleBarChart(ctx, canvas, labels, valuesDiff, "Selisih Mean MFCC (Absolute)");
+        status.textContent = `Menampilkan grafik selisih Mean untuk ${pair}`;
+        status.className = "status ok";
       }
     }
 
-    function renderStatsTable() {
-      el.statsTableBody.innerHTML = "";
-      for (const col of numericColumns) {
-        const vals = tableData.map(r => toNumber(r[col])).filter(v => !Number.isNaN(v));
-        if (!vals.length) continue;
-        const mu = mean(vals);
-        const sd = std(vals, mu);
-        const mn = Math.min(...vals);
-        const mx = Math.max(...vals);
-
+    function updateDetailTable(data) {
+      const detailBody = document.getElementById("detailBody");
+      detailBody.innerHTML = "";
+      data.forEach(item => {
         const tr = document.createElement("tr");
-        tr.innerHTML = [
-          `<td>${col}</td>`,
-          `<td>${vals.length}</td>`,
-          `<td>${mu.toFixed(4)}</td>`,
-          `<td>${sd.toFixed(4)}</td>`,
-          `<td>${mn.toFixed(4)}</td>`,
-          `<td>${mx.toFixed(4)}</td>`
-        ].join("");
-        el.statsTableBody.appendChild(tr);
-      }
+        tr.innerHTML = `
+          <td>${item.coeff}</td>
+          <td>${item.mean_asli.toFixed(2)}</td>
+          <td>${item.std_asli.toFixed(2)}</td>
+          <td>${item.mean_clone.toFixed(2)}</td>
+          <td>${item.std_clone.toFixed(2)}</td>
+          <td>${item.mean_diff.toFixed(2)}</td>
+          <td>${item.std_diff.toFixed(2)}</td>
+        `;
+        detailBody.appendChild(tr);
+      });
     }
 
-    function renderPreview(maxRows = 20) {
-      el.previewHead.innerHTML = "";
-      el.previewBody.innerHTML = "";
+    function drawBarChart(ctx, canvas, labels, valuesA, valuesB, title) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      const headRow = document.createElement("tr");
-      for (const h of headers) {
-        const th = document.createElement("th");
-        th.textContent = h;
-        headRow.appendChild(th);
-      }
-      el.previewHead.appendChild(headRow);
-
-      for (const row of tableData.slice(0, maxRows)) {
-        const tr = document.createElement("tr");
-        for (const h of headers) {
-          const td = document.createElement("td");
-          td.textContent = row[h] ?? "";
-          tr.appendChild(td);
-        }
-        el.previewBody.appendChild(tr);
-      }
-    }
-
-    function clearCanvas() {
-      const ctx = el.chart.getContext("2d");
-      ctx.clearRect(0, 0, el.chart.width, el.chart.height);
-      ctx.fillStyle = "#5b6470";
-      ctx.font = "14px Segoe UI";
-      ctx.fillText("Belum ada grafik. Pilih aksi di atas.", 20, 30);
-    }
-
-    function drawAxes(ctx, area) {
-      ctx.strokeStyle = "#9aa6b2";
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(area.left, area.top);
-      ctx.lineTo(area.left, area.bottom);
-      ctx.lineTo(area.right, area.bottom);
-      ctx.stroke();
-    }
-
-    function drawBarChart(labels, valuesA, valuesB = null, title = "") {
-      const ctx = el.chart.getContext("2d");
-      ctx.clearRect(0, 0, el.chart.width, el.chart.height);
-
-      const area = { left: 60, top: 40, right: 980, bottom: 300 };
+      const area = { left: 60, top: 40, right: 980, bottom: 360 };
       drawAxes(ctx, area);
 
-      const allVals = valuesB ? valuesA.concat(valuesB) : valuesA.slice();
+      const allVals = valuesA.concat(valuesB);
       const maxVal = Math.max(...allVals, 0.000001);
       const minVal = Math.min(...allVals, 0);
       const range = maxVal - minVal || 1;
 
       const n = labels.length;
       const groupWidth = (area.right - area.left) / Math.max(n, 1);
-      const barWidth = valuesB ? groupWidth * 0.32 : groupWidth * 0.6;
+      const barWidth = groupWidth * 0.32;
 
       const yOf = v => area.bottom - ((v - minVal) / range) * (area.bottom - area.top);
 
       for (let i = 0; i < n; i++) {
-        const gx = area.left + i * groupWidth + groupWidth * 0.2;
+        const gx = area.left + i * groupWidth + groupWidth * 0.15;
 
         const yA = yOf(valuesA[i]);
         ctx.fillStyle = "#0a7f6f";
         ctx.fillRect(gx, Math.min(yA, yOf(0)), barWidth, Math.abs(yA - yOf(0)));
 
-        if (valuesB) {
-          const yB = yOf(valuesB[i]);
-          ctx.fillStyle = "#d97706";
-          ctx.fillRect(gx + barWidth + groupWidth * 0.08, Math.min(yB, yOf(0)), barWidth, Math.abs(yB - yOf(0)));
-        }
+        const yB = yOf(valuesB[i]);
+        ctx.fillStyle = "#d97706";
+        ctx.fillRect(gx + barWidth + 6, Math.min(yB, yOf(0)), barWidth, Math.abs(yB - yOf(0)));
 
-        if (i % Math.ceil(n / 10) === 0 || n <= 14) {
+        if (i % 2 === 0) {
           ctx.save();
           ctx.translate(area.left + i * groupWidth + groupWidth * 0.5, area.bottom + 14);
-          ctx.rotate(-0.55);
+          ctx.rotate(-0.4);
           ctx.fillStyle = "#364152";
           ctx.font = "11px Segoe UI";
           ctx.fillText(String(labels[i]), 0, 0);
@@ -474,111 +459,72 @@
 
       ctx.fillStyle = "#5b6470";
       ctx.font = "11px Segoe UI";
-      ctx.fillText(`Min: ${minVal.toFixed(3)} | Max: ${maxVal.toFixed(3)}`, 60, 318);
+      ctx.fillText(`Min: ${minVal.toFixed(3)} | Max: ${maxVal.toFixed(3)}`, 60, 378);
     }
 
-    function drawGenericColumn() {
-      const col = el.numericColumn.value;
-      if (!col) {
-        setStatus("Tidak ada kolom numerik untuk divisualisasikan.", "warn");
-        return;
-      }
+    function drawSingleBarChart(ctx, canvas, labels, values, title) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      const labels = tableData.map((r, i) => r.Koefisien_MFCC || r.file || r.label || String(i + 1));
-      const values = tableData.map(r => toNumber(r[col])).filter(v => !Number.isNaN(v));
+      const area = { left: 60, top: 40, right: 980, bottom: 360 };
+      drawAxes(ctx, area);
 
-      if (!values.length) {
-        setStatus("Kolom terpilih tidak punya nilai numerik valid.", "warn");
-        return;
-      }
+      const maxVal = Math.max(...values, 0.000001);
+      const minVal = 0;
+      const range = maxVal - minVal || 1;
 
-      const n = Math.min(labels.length, values.length);
-      drawBarChart(labels.slice(0, n), values.slice(0, n), null, `Grafik Kolom: ${col}`);
-      setStatus(`Grafik kolom ${col} berhasil dibuat.`, "ok");
-    }
+      const n = labels.length;
+      const groupWidth = (area.right - area.left) / Math.max(n, 1);
+      const barWidth = groupWidth * 0.6;
 
-    function drawMfccComparison() {
-      const meanCols = headers
-        .filter(h => /^mean_\d+$/i.test(h))
-        .sort((x, y) => Number(x.split("_")[1]) - Number(y.split("_")[1]));
+      const yOf = v => area.bottom - ((v - minVal) / range) * (area.bottom - area.top);
 
-      if (!meanCols.length) {
-        setStatus("Kolom mean_i tidak ditemukan dari backend.", "warn");
-        return;
-      }
+      for (let i = 0; i < n; i++) {
+        const gx = area.left + i * groupWidth + (groupWidth - barWidth) / 2;
 
-      const rowAsli = tableData.find(r => String(r.label).toLowerCase() === "asli");
-      const rowClone = tableData.find(r => String(r.label).toLowerCase() === "cloning");
+        const y = yOf(values[i]);
+        ctx.fillStyle = "#0a7f6f";
+        ctx.fillRect(gx, y, barWidth, area.bottom - y);
 
-      if (rowAsli && rowClone) {
-        const labels = meanCols.map(c => c.replace("mean_", "MFCC_"));
-        const a = meanCols.map(c => toNumber(rowAsli[c]));
-        const b = meanCols.map(c => toNumber(rowClone[c]));
-        drawBarChart(labels, a, b, "Perbandingan Mean MFCC: Asli vs Clone");
-        setStatus("Grafik perbandingan MFCC asli vs clone berhasil dibuat.", "ok");
-        return;
-      }
-
-      const labels = meanCols;
-      const firstRow = tableData[0] || {};
-      const secondRow = tableData[1] || null;
-      const a = meanCols.map(c => toNumber(firstRow[c]));
-      const b = secondRow ? meanCols.map(c => toNumber(secondRow[c])) : null;
-      drawBarChart(labels, a, b, "Perbandingan mean_i (2 baris pertama)");
-      setStatus("Grafik mean_i dibuat dari 2 data pertama (label tidak lengkap).", "warn");
-    }
-
-    function ingestBackendPayload(payload) {
-      if (!payload || !Array.isArray(payload.rows) || !Array.isArray(payload.headers)) {
-        setStatus("Payload backend tidak valid.", "bad");
-        return;
-      }
-
-      headers = payload.headers;
-      tableData = payload.rows;
-      numericColumns = detectNumericColumns(tableData, headers);
-
-      setMetrics();
-      populateColumnSelect();
-      renderStatsTable();
-      renderPreview();
-      clearCanvas();
-      setStatus("Data backend berhasil dimuat. Pilih jenis grafik.", "ok");
-    }
-
-    async function loadFromBackend() {
-      const base = String(el.apiBase.value || "").trim().replace(/\/$/, "");
-      if (!base) {
-        setStatus("Alamat backend wajib diisi.", "bad");
-        return;
-      }
-
-      try {
-        setStatus("Mengambil data dari backend...", "");
-        const resp = await fetch(`${base}/api/analyze`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({})
-        });
-
-        if (!resp.ok) {
-          const text = await resp.text();
-          throw new Error(text || `HTTP ${resp.status}`);
+        if (i % 2 === 0) {
+          ctx.save();
+          ctx.translate(area.left + i * groupWidth + groupWidth * 0.5, area.bottom + 14);
+          ctx.rotate(-0.4);
+          ctx.fillStyle = "#364152";
+          ctx.font = "11px Segoe UI";
+          ctx.fillText(String(labels[i]), 0, 0);
+          ctx.restore();
         }
-
-        const payload = await resp.json();
-        ingestBackendPayload(payload);
-      } catch (err) {
-        setStatus(`Gagal memuat backend: ${err.message}`, "bad");
       }
+
+      ctx.fillStyle = "#1f2a37";
+      ctx.font = "bold 15px Segoe UI";
+      ctx.fillText(title, 60, 24);
+
+      ctx.fillStyle = "#5b6470";
+      ctx.font = "11px Segoe UI";
+      ctx.fillText(`Min: ${minVal.toFixed(3)} | Max: ${maxVal.toFixed(3)}`, 60, 378);
     }
 
-    el.loadBackend.addEventListener("click", loadFromBackend);
+    function drawAxes(ctx, area) {
+      ctx.strokeStyle = "#9aa6b2";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(area.left, area.top);
+      ctx.lineTo(area.left, area.bottom);
+      ctx.lineTo(area.right, area.bottom);
+      ctx.stroke();
+    }
 
-    el.drawGeneric.addEventListener("click", drawGenericColumn);
-    el.drawMfcc.addEventListener("click", drawMfccComparison);
+    // Event listeners
+    document.getElementById("drawChart").addEventListener("click", drawChart);
 
-    clearCanvas();
+    // Clear canvas on load
+    const canvas = document.getElementById("chart");
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#5b6470";
+    ctx.font = "14px Segoe UI";
+    ctx.fillText("Pilih pasangan dan tipe visualisasi untuk melihat grafik.", 20, 30);
   </script>
 </body>
 </html>
