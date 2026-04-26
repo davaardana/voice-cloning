@@ -3,23 +3,71 @@ import numpy as np
 import pandas as pd
 import librosa
 import librosa.display
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
 
 # =========================
 # KONFIGURASI FILE AUDIO
 # =========================
-PAIRS = [
-    ("asli1.wav", "clone1.wav"),
-    ("asli2.wav", "clone2.wav"),
-    ("asli3.wav", "clone3.wav"),
-    ("asli4.wav", "clone4.wav"),
-]
 SOURCE_PLATFORM = "WhatsApp Voice Note"
 CLONING_TOOL = "Minimax.AI"
 
 # Folder output
 output_folder = "hasil"
 os.makedirs(output_folder, exist_ok=True)
+
+# =========================
+# FUNGSI AUTO-DISCOVER PAIRS
+# =========================
+def discover_pairs(dataset_folder="dataset"):
+    """
+    Cari semua file asli dan clone di folder dataset.
+    Pair berdasarkan nama file yang cocok.
+    Contoh: asli1.wav dengan clone1.wav, asli5.wav dengan clone5.wav, dll.
+    """
+    asli_files = []
+    clone_files = []
+    
+    if not os.path.exists(dataset_folder):
+        print(f"Warning: Folder '{dataset_folder}' tidak ditemukan, gunakan file di folder saat ini")
+        dataset_folder = "."
+    
+    # Scan folder untuk menemukan file asli dan clone
+    for file in os.listdir(dataset_folder):
+        if file.lower().endswith(('.wav', '.mp3')):
+            file_lower = file.lower()
+            if 'asli' in file_lower and 'clone' not in file_lower:
+                asli_files.append(os.path.join(dataset_folder, file))
+            elif 'clone' in file_lower:
+                clone_files.append(os.path.join(dataset_folder, file))
+    
+    # Pair files berdasarkan nama yang similar
+    # Strategi: extract identifier dari nama (angka atau nama), lalu pair
+    pairs = []
+    for asli_file in sorted(asli_files):
+        asli_basename = os.path.basename(asli_file)
+        # Extract identifier (angka atau kata setelah 'asli')
+        asli_id = asli_basename.replace('asli', '').replace('.wav', '').replace('.mp3', '').strip('_').lower()
+        
+        # Cari clone yang match
+        for clone_file in sorted(clone_files):
+            clone_basename = os.path.basename(clone_file)
+            # Extract identifier dari clone
+            clone_id = clone_basename.replace('clone', '').replace('.wav', '').replace('.mp3', '').strip('_').lower()
+            
+            if asli_id == clone_id:
+                pairs.append((asli_file, clone_file))
+                break
+    
+    print(f"[OK] Ditemukan {len(pairs)} pasangan asli-clone:")
+    for asli, clone in pairs:
+        print(f"  - {os.path.basename(asli)} <-> {os.path.basename(clone)}")
+    
+    return pairs
+
+# Auto-discover pairs pada startup
+PAIRS = discover_pairs("dataset")
 
 # =========================
 # FUNGSI LOAD AUDIO
